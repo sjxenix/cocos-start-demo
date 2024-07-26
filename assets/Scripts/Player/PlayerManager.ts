@@ -30,6 +30,7 @@ export class PlayerManager extends Component {
     animationClip.addTrack(track)
 
     animationClip.duration = frames.length * ANIMATION_SPEED // 整个动画剪辑的周期
+    animationClip.wrapMode = AnimationClip.WrapMode.Loop
     animationComponent.defaultClip = animationClip
     animationComponent.play()
   }
