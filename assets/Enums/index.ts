@@ -13,4 +13,24 @@ export enum TILE_TYPE_ENUM {
 
 export enum EVENT_ENUM {
   NEXT_LEVEL = 'NEXT_LEVEL',
+  PLAYER_CONTROL = 'PLAYER_CONTROL',
+}
+
+export enum CONTROLLER_ENUM {
+  TOP = 'TOP',
+  BOTTOM = 'BOTTOM',
+  LEFT = 'LEFT',
+  RIGHT = 'RIGHT',
+  TURNLEFT = 'TURNLEFT',
+  TURN_RIGHT = 'TURN_RIGHT',
+}
+
+export enum FSM_PARAMS_TYPE_ENUM {
+  NUMBER = 'NUMBER',
+  TRIGGER = 'TRIGGER',
+}
+
+export enum PARAMS_NAME_ENUM {
+  IDLE = 'IDLE',
+  TURNLEFT = 'TURNLEFT',
 }

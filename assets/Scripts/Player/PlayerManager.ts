@@ -1,14 +1,20 @@
 import { _decorator, Component, Node, Sprite, UITransform, AnimationClip, Animation, animation, SpriteFrame } from 'cc'
 import EventManager from 'db://assets/Runtime/EventManager'
-import { EVENT_ENUM } from 'db://assets/Enums'
+import { CONTROLLER_ENUM, EVENT_ENUM, PARAMS_NAME_ENUM } from 'db://assets/Enums'
 import { TILE_HEIGHT, TILE_WIDTH } from 'db://assets/Scripts/Tile/TileManager'
 import ResourceManager from 'db://assets/Runtime/ResourceManager'
+import { PlayerStateMachine } from 'db://assets/Scripts/Player/PlayerStateMachine'
 const { ccclass, property } = _decorator
-
-const ANIMATION_SPEED = 1 / 8
 
 @ccclass('PlayerManager')
 export class PlayerManager extends Component {
+  x: number = 0
+  y: number = 0
+  targetX: number = 0
+  targetY: number = 0
+  private readonly speed = 1 / 10
+  fsm: PlayerStateMachine
+
   async init() {
     const sprite = this.addComponent(Sprite)
     sprite.sizeMode = Sprite.SizeMode.CUSTOM
@@ -16,22 +22,48 @@ export class PlayerManager extends Component {
     const tranform = this.getComponent(UITransform)
     tranform.setContentSize(TILE_WIDTH * 4, TILE_HEIGHT * 4)
 
-    const spriteFrames = await ResourceManager.Instance.loadDir('texture/player/idle/top')
-    const animationComponent = this.addComponent(Animation)
+    this.fsm = this.addComponent(PlayerStateMachine)
+    await this.fsm.init()
+    this.fsm.setParams(PARAMS_NAME_ENUM.IDLE, true)
 
-    const animationClip = new AnimationClip()
+    EventManager.Instance.on(EVENT_ENUM.PLAYER_CONTROL, this.move, this)
+  }
 
-    const track = new animation.ObjectTrack() // 创建一个对象轨道
-    track.path = new animation.TrackPath().toComponent(Sprite).toProperty('spriteFrame') // 指定轨道路径，即指定目标对象为 "Foo" 子节点的 "position" 属性
-    const frames: Array<[number, SpriteFrame]> = spriteFrames.map((item, index) => [ANIMATION_SPEED * index, item])
-    track.channel.curve.assignSorted(frames)
+  update() {
+    this.updateXY()
+    this.node.setPosition(this.x * TILE_WIDTH - TILE_WIDTH * 1.5, -this.y * TILE_HEIGHT + TILE_HEIGHT * 1.5)
+  }
 
-    // 最后将轨道添加到动画剪辑以应用
-    animationClip.addTrack(track)
+  updateXY() {
+    if (this.targetX < this.x) {
+      this.x -= this.speed
+    } else if (this.targetX > this.x) {
+      this.x += this.speed
+    }
 
-    animationClip.duration = frames.length * ANIMATION_SPEED // 整个动画剪辑的周期
-    animationClip.wrapMode = AnimationClip.WrapMode.Loop
-    animationComponent.defaultClip = animationClip
-    animationComponent.play()
+    if (this.targetY < this.y) {
+      this.y -= this.speed
+    } else if (this.targetY > this.y) {
+      this.y += this.speed
+    }
+
+    if (Math.abs(this.targetX - this.x) <= 0.1 && Math.abs(this.targetY - this.y) <= 0.1) {
+      this.x = this.targetX
+      this.y = this.targetY
+    }
+  }
+
+  move(inputDirection: CONTROLLER_ENUM) {
+    if (inputDirection === CONTROLLER_ENUM.TOP) {
+      this.targetY -= 1
+    } else if (inputDirection === CONTROLLER_ENUM.BOTTOM) {
+      this.targetY += 1
+    } else if (inputDirection === CONTROLLER_ENUM.LEFT) {
+      this.targetX -= 1
+    } else if (inputDirection === CONTROLLER_ENUM.RIGHT) {
+      this.targetX += 1
+    } else if (inputDirection === CONTROLLER_ENUM.TURNLEFT) {
+      this.fsm.setParams(PARAMS_NAME_ENUM.TURNLEFT, true)
+    }
   }
 }
